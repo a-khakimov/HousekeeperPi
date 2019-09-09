@@ -2,6 +2,24 @@
 
 from picamera import PiCamera
 from time import sleep
+import datetime
+import telegram
+from telegram.ext import Updater
+from telegram.ext import CommandHandler  
+
+
+TOKEN='949089126:AAGUWleqokysidGBs8KOuMb51bPTiox154o'
+
+reqproxy = telegram.utils.request.Request(proxy_url='socks5://98.143.145.30:62353')
+bot = telegram.Bot(token=TOKEN, request=reqproxy)
+print(bot.get_me())
+
+# Getting chat id
+#chat_Id = bot.get_updates()[-1].message.chat_id
+#print('chat_Id: ' + str(chat_Id))
+
+ainr_user_chat_id=174861972
+bot.send_photo(chat_id=ainr_user_chat_id, photo=open('/tmp/absdiff.png', 'rb'))
 
 import cv2
 import numpy as np
@@ -14,59 +32,33 @@ def mse(imageA, imageB):
     # NOTE: the two images must have the same dimension
     err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
     err /= float(imageA.shape[0] * imageA.shape[1])
-    
     return err
 
 
-
-# return the MSE, the lower the error, the more "similar"
-    # the two images are
-
 camera = PiCamera()
-camera.resolution = (500, 500)
+camera.resolution = (400, 400)
 
-#imgA = np.empty((500, 500, 3), dtype=np.uint8)
-#imgB = np.empty((500, 500, 3), dtype=np.uint8)
+while False:
+    FirstImgName = str(datetime.datetime.now()) + '.jpg'
+    camera.capture('/tmp/' + FirstImgName)
+    sleep(1)
+    SecondImgName = str(datetime.datetime.now()) + '.jpg'
+    camera.capture('/tmp/' + SecondImgName)
 
-camera.capture('/tmp/pic1.jpg')
-#camera.capture(imgA, 'bgr')
-sleep(1)
-camera.capture('/tmp/pic2.jpg')
-#camera.capture(imgB, 'bgr')
+    imgA = cv2.imread('/tmp/' + FirstImgName)
+    imgB = cv2.imread('/tmp/' + SecondImgName)
 
-imgA = cv2.imread("/tmp/pic1.jpg")
-imgB = cv2.imread("/tmp/pic2.jpg")
+    imgA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
+    imgB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
 
-#print(type(imgA))
-#print(type(imgB))
+    absdiff = cv2.absdiff(imgA, imgB)
+    cv2.imwrite("/tmp/absdiff.png", absdiff)
 
+    diff = cv2.subtract(imgA, imgB)
+    result = not np.any(diff)
 
-imgA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
-imgB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
+    m = mse(imgA, imgB)
+    s = ssim(imgA, imgB)
 
-absdiff = cv2.absdiff(imgA, imgB)
-cv2.imwrite("/tmp/absdiff.png", absdiff)
+    print("mse: %s, ssim: %s, result: %s" % (m, s, result))
 
-diff = cv2.subtract(imgA, imgB)
-result = not np.any(diff)
-
-m = mse(imgA, imgB)
-s = ssim(imgA, imgB)
-
-print("mse: %s, ssim: %s" % (m, s))
-
-if result:
-    print("The images are the same")
-else:
-    cv2.imwrite("/tmp/diff.png", diff)
-    print("The images are different")
-
-#camera = PiCamera()
-#camera.start_preview()
-
-#sleep()
-
-#camera.capture('/tmp/pic1.jpg')
-#sleep(10)
-#camera.capture('/tmp/pic2.jpg')
-#camera.stop_preview()
