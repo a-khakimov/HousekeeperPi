@@ -1,6 +1,6 @@
 #~/usr/bin/env python
 
-from picamera import PiCamera
+
 from time import sleep
 import datetime
 import telegram
@@ -11,11 +11,13 @@ from PIL import Image
 import cv2
 import numpy as np
 from skimage.measure import compare_ssim as ssim
+import shutil
+import requests
 
 TOKEN='949089126:AAGUWleqokysidGBs8KOuMb51bPTiox154o'
 
-reqproxy = telegram.utils.request.Request(proxy_url='socks5://190.6.196.118:9999')
-bot = telegram.Bot(token=TOKEN, request=reqproxy)
+#reqproxy = telegram.utils.request.Request(proxy_url='socks5://190.6.196.118:9999')
+bot = telegram.Bot(token=TOKEN)
 print(bot.get_me())
 
 # Getting chat id
@@ -32,18 +34,21 @@ def mse(imageA, imageB):
     return err
 
 
-camera = PiCamera()
-camera.resolution = (400, 400)
+
+def get_image(host, img):
+	response = requests.get(host, stream=True)
+	with open(img, 'wb') as out_file:
+		shutil.copyfileobj(response.raw, out_file)
+	del response
+
 
 while True:
-    FirstImgName = str(datetime.datetime.now()).replace(' ', '-') + '.png'
-    camera.capture('/tmp/' + FirstImgName)
+    get_image('http://localhost:2080/image', '/tmp/img1.png')
     sleep(1)
-    SecondImgName = str(datetime.datetime.now()).replace(' ', '-')  + '.png'
-    camera.capture('/tmp/' + SecondImgName)
+    get_image('http://localhost:2080/image', '/tmp/img2.png')
 
-    imgA = cv2.imread('/tmp/' + FirstImgName)
-    imgB = cv2.imread('/tmp/' + SecondImgName)
+    imgA = cv2.imread('/tmp/img1.png')
+    imgB = cv2.imread('/tmp/img2.png')
 
     imgA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
     imgB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
@@ -62,8 +67,8 @@ while True:
     print(msg)
     
     if m > 50:
-        imgs_path = ['/tmp/' + FirstImgName,
-                     '/tmp/' + SecondImgName,
+        imgs_path = ['/tmp/img1.png',
+                     '/tmp/img2.png',
                      '/tmp/absdiff.png']
    
         total_width = 0
@@ -86,9 +91,4 @@ while True:
     
         bot.send_photo(chat_id=ainr_user_chat_id, photo=open('/tmp/test.png', 'rb'))
         bot.send_message(chat_id=ainr_user_chat_id, text=msg)
-    
-    
-    
-    
-    
-    
+        
