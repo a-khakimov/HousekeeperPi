@@ -1,10 +1,22 @@
 #include <QCoreApplication>
-#include "httplib.h"
+#include <QCameraImageCapture>
+#include <QCameraInfo>
+#include <QCamera>
+#include <QBuffer>
+#include <QPointer>
+#include <QTimer>
+#include <QDateTime>
+#include <QFuture>
+#include <QtConcurrent/QtConcurrent>
+
 #include <fstream>
 #include <iostream>
+#include "httplib.h"
 
-int main()
+
+void s()
 {
+
     httplib::Server server;
 
     server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
@@ -39,8 +51,43 @@ int main()
 
     server.Get("/webcamera.png", [](const httplib::Request& req, httplib::Response& res) {
         Q_UNUSED(req);
-
+        Q_UNUSED(res);
     });
 
     server.listen("localhost", 1234);
+}
+
+int main(int argc, char** argv)
+{
+    QCoreApplication app(argc, argv);
+    QCamera *cam = new QCamera;
+
+    cam->setCaptureMode(QCamera::CaptureStillImage);
+
+    QCameraImageCapture *cap = new QCameraImageCapture(cam);
+    cap->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
+
+    QObject::connect(cap, &QCameraImageCapture::imageCaptured, [=] (int id, QImage img) {
+        Q_UNUSED(id);
+        QDateTime dt;
+        QString n =  QString("/tmp/img_") + dt.time().currentTime().toString() + ".png";
+        qDebug() << "imageCaptured: " << n;
+        img.save(n);
+    });
+
+    QTimer timer;
+    timer.start(2000);
+
+    QObject::connect(&timer, &QTimer::timeout, [=] () {
+        qDebug() << "timeout";
+        cam->searchAndLock();
+        cap->capture();
+        cam->unlock();
+    });
+
+    cam->start();
+
+    QFuture<void> future = QtConcurrent::run(s);
+
+    return app.exec();
 }
