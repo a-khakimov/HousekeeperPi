@@ -1,32 +1,55 @@
-#include <QCoreApplication>
-#include <QCameraImageCapture>
-#include <QCameraInfo>
-#include <QCamera>
-#include <QBuffer>
-#include <QPointer>
-#include <QTimer>
-#include <QDateTime>
-#include <QFuture>
-#include <QtConcurrent/QtConcurrent>
-
 #include <fstream>
 #include <iostream>
 #include "httplib.h"
 
+#include <opencv2/core.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/opencv.hpp>
 
-void s()
+class WebCamCapture {
+public:
+    WebCamCapture () {
+        int deviceID = 0;             // 0 = open default camera
+        int apiID = cv::CAP_ANY;      // 0 = autodetect default API
+        cap.open(deviceID + apiID);
+
+        if (!cap.isOpened()) {
+            std::cerr << "ERROR! Unable to open camera\n";
+            // TODO: throw exception
+        }
+    }
+
+    std::vector<uchar> takeImage()
+    {
+        cap.read(frame);
+
+        if (frame.empty()) {
+            std::cerr << "ERROR! blank frame grabbed\n";
+            // TODO: return error
+        }
+
+        std::vector<uchar> png_image;
+        imencode(".png", frame, png_image);
+        return png_image;
+    }
+
+    ~WebCamCapture() {
+
+    }
+private:
+    cv::Mat frame;
+    cv::VideoCapture cap;
+};
+
+int main()
 {
-
     httplib::Server server;
 
-    server.Get("/hi", [](const httplib::Request& req, httplib::Response& res) {
-        Q_UNUSED(req);
+    server.Get("/hi", [](const httplib::Request&, httplib::Response& res) {
         res.set_content("Hello World!", "text/plain");
     });
 
-
-    server.Get("/image.png", [](const httplib::Request& req, httplib::Response& res) {
-        Q_UNUSED(req);
+    server.Get("/image.png", [](const httplib::Request&, httplib::Response& res) {
         std::ifstream f("/home/ainr/img.png", std::ios::binary);
         if(f.is_open()) {
             f.seekg(0, std::ios::end);
@@ -49,45 +72,14 @@ void s()
         }
     });
 
-    server.Get("/webcamera.png", [](const httplib::Request& req, httplib::Response& res) {
-        Q_UNUSED(req);
-        Q_UNUSED(res);
+    server.Get("/webcamera.png", [](const httplib::Request&, httplib::Response& res) {
+        WebCamCapture wcam;
+        std::vector<uchar> img = wcam.takeImage();
+        res.set_content_provider(img.size(), [img](uint64_t offset, uint64_t length, httplib::DataSink &sink) {
+            const char* data = (char*)img.data();
+            sink.write(&data[offset], length);
+        });
     });
 
     server.listen("localhost", 1234);
-}
-
-int main(int argc, char** argv)
-{
-    QCoreApplication app(argc, argv);
-    QCamera *cam = new QCamera;
-
-    cam->setCaptureMode(QCamera::CaptureStillImage);
-
-    QCameraImageCapture *cap = new QCameraImageCapture(cam);
-    cap->setCaptureDestination(QCameraImageCapture::CaptureToBuffer);
-
-    QObject::connect(cap, &QCameraImageCapture::imageCaptured, [=] (int id, QImage img) {
-        Q_UNUSED(id);
-        QDateTime dt;
-        QString n =  QString("/tmp/img_") + dt.time().currentTime().toString() + ".png";
-        qDebug() << "imageCaptured: " << n;
-        img.save(n);
-    });
-
-    QTimer timer;
-    timer.start(2000);
-
-    QObject::connect(&timer, &QTimer::timeout, [=] () {
-        qDebug() << "timeout";
-        cam->searchAndLock();
-        cap->capture();
-        cam->unlock();
-    });
-
-    cam->start();
-
-    QFuture<void> future = QtConcurrent::run(s);
-
-    return app.exec();
 }

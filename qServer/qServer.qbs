@@ -1,18 +1,26 @@
 import qbs
 
-QtApplication {
+CppApplication {
     cpp.cxxLanguageVersion: "c++17"
 
-    cpp.includePaths: "../cpp-httplib"
+    cpp.includePaths: [
+        "../cpp-httplib",
+        "/usr/local/include/opencv4/"
+    ]
 
-    Depends {
-        name: "Qt"
-        submodules: [
-            "core",
-            "multimedia",
-            "multimediawidgets"
-        ]
-    }
+    cpp.libraryPaths: [
+        "/usr/local/lib/"
+    ]
+
+    cpp.dynamicLibraries: [
+        "opencv_core",
+        "opencv_video",
+        "opencv_videoio",
+        "opencv_highgui",
+        "opencv_imgcodecs",
+        "pthread"
+    ]
+    //Depends { name: "" }
 
     cpp.defines: [
         // The following define makes your compiler emit warnings if you use
