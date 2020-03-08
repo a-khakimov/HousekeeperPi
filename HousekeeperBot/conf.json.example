@@ -1,0 +1,4 @@
+{
+	"token" : "",
+	"proxy_host" : "socks5://localhost:9050"
+}
