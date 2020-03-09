@@ -14,6 +14,7 @@ CppApplication {
     cpp.includePaths: [
         "../cpp-httplib",
         "../timercpp",
+        "../plog/include/",
         "/usr/local/include/opencv4/"
     ]
 

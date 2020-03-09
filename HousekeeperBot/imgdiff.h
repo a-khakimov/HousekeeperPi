@@ -6,16 +6,16 @@
 #include <functional>
 #include <queue>
 
-class ImgDiff
+class ImgDiffFinder
 {
 public:
-    ImgDiff();
-    virtual ~ImgDiff();
-    void run(int ms, std::function<void (double, std::string)> f);
+    ImgDiffFinder();
+    virtual ~ImgDiffFinder();
+    void run(int ms, std::function<void (double, std::string)>);
 
 private:
-    ImgSource isrc;
     Timer timer;
+    ImgSource isrc;
     std::queue<cv::Mat> images_queue;
 };
 

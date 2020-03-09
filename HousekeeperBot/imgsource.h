@@ -2,6 +2,7 @@
 #define IMGSOURCE_H
 
 #include <memory>
+#include <tuple>
 #include <opencv2/core.hpp>
 #include "httplib.h"
 
@@ -12,8 +13,7 @@ public:
     virtual ~ImgSource();
 
     bool isAlive();
-    cv::Mat get();
-
+    std::tuple<cv::Mat, bool> get();
 
 private:
     std::shared_ptr<httplib::Client> client;

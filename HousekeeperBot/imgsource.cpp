@@ -1,7 +1,9 @@
 #include "imgsource.h"
 
+#include "plog/Log.h"
 #include <opencv2/imgcodecs.hpp>
 #include <iostream>
+
 
 ImgSource::ImgSource()
 {
@@ -23,9 +25,10 @@ bool ImgSource::isAlive()
     return (res && res->status == 200 && res->body == "I am ok!");
 }
 
-cv::Mat ImgSource::get()
+std::tuple<cv::Mat, bool> ImgSource::get()
 {
-    cv::Mat result;
+    cv::Mat img;
+    bool isOk = false;
     std::vector<char> inputImgArray;
     auto res = client->Get("/webcamera.png", [&](const char *data, uint64_t data_length) {
         inputImgArray.insert(inputImgArray.end(), data, data + data_length);
@@ -33,7 +36,11 @@ cv::Mat ImgSource::get()
     });
 
     if (res && res->status == 200) {
-        result = cv::imdecode(cv::Mat(inputImgArray), 1);
+        img = cv::imdecode(cv::Mat(inputImgArray), 1);
+        isOk = true;
     }
-    return result;
+
+    PLOG_DEBUG << "Result is - " << (isOk ? "Good" : "Bad");
+
+    return std::tuple { img, isOk };
 }

@@ -8,8 +8,14 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/quality.hpp>
 #include "imgdiff.h"
+#include "plog/Log.h"
+#include "plog/Appenders/ColorConsoleAppender.h"
+
 
 int main() {
+    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+    plog::init(plog::verbose, "housekeeperPi.log").addAppender(&consoleAppender);
+
     try {
         std::ifstream i("/home/ainr/garage/HousekeeperPi/HousekeeperBot/conf.json");
         nlohmann::json conf;
@@ -26,53 +32,51 @@ int main() {
 
         TgBot::Bot bot(token, curl);
 
-        bot.getEvents().onCommand("start", [&bot](TgBot::Message::Ptr message) {
-            bot.getApi().sendMessage(message->chat->id, "Hi!");
-        });
-
-        bot.getEvents().onCommand("photo", [&bot](TgBot::Message::Ptr message) {
-            ImgSource isrc;
-            cv::Mat img = isrc.get();
-            const std::string imgPath = "/tmp/fast.img.png";
-            cv::imwrite(imgPath, img);
-            bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(imgPath, "image/png"));
-        });
-
-        bot.getEvents().onAnyMessage([&bot](TgBot::Message::Ptr message) {
-            if (StringTools::startsWith(message->text, "/start")) {
-                return;
+        bot.getEvents().onCommand("help", [&bot, &chat_id](TgBot::Message::Ptr message) {
+            PLOG_INFO << "Command 'help' from " << message->chat->id;
+            if (message->chat->id == chat_id) {
+                const std::string help = "/help - help message\n"
+                                         "/photo - take photo and send";
+                bot.getApi().sendMessage(message->chat->id, help);
             }
-            std::cout << ">\t id:" << message->chat->id << std::endl
-                      << "\t username:" << message->chat->username << std::endl
-                      << "\t lastName:" << message->chat->lastName << std::endl
-                      << "\t firstName:" << message->chat->firstName << std::endl
-                      << "\t text:" << message->text << std::endl
-                      << "\t from->id:" << message->from->id << std::endl
-                      << "\t from->isBot:" << message->from->isBot << std::endl;
-            bot.getApi().sendMessage(message->chat->id, "Your message is: " + message->text);
         });
 
-        std::cout << "Bot username: " << bot.getApi().getMe()->username << std::endl;
-        TgBot::TgLongPoll longPoll(bot);
+        bot.getEvents().onCommand("photo", [&bot, &chat_id](TgBot::Message::Ptr message) {
+            PLOG_INFO << "Command 'photo' from " << message->chat->id;
+            if (message->chat->id == chat_id) {
+                ImgSource isrc;
+                auto [ img, isOk ] = isrc.get();
+                if (not isOk) {
+                    PLOG_INFO << "is not ok";
+                    return;
+                }
+                const std::string imgPath = "/tmp/fast.img.png";
+                cv::imwrite(imgPath, img);
+                bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(imgPath, "image/png"));
+            }
+        });
 
-
-        ImgDiff idiff;
-        idiff.run(1000, [&chat_id, &bot](double mse, std::string imgDiffPath) {
-            std::cout << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]" << std::endl;
+        ImgDiffFinder imgdiff;
+        auto imgDiffHandler = [&bot, &chat_id](double mse, std::string imgDiffPath) {
+            PLOG_INFO << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]";
             bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
             bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
-        });
+        };
+        imgdiff.run(1000, imgDiffHandler);
+
+        TgBot::TgLongPoll longPoll(bot);
+        PLOG_INFO << "Bot username: " << bot.getApi().getMe()->username;
 
         while (true) {
-            std::cout << "Long poll..." << std::endl;
+            PLOG_INFO << "Long poll...";
             longPoll.start();
         }
     }
     catch (TgBot::TgException& e) {
-        std::cout << e.what() << std::endl;
+        PLOG_ERROR << e.what();
     }
     catch (nlohmann::json::exception& e) {
-        std::cerr << e.what() << std::endl;
+        PLOG_ERROR << e.what();
     }
 
     return 0;

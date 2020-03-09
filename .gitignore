@@ -1,3 +1,4 @@
 *.qbs.user
 build*
-
+*.log
+default/
