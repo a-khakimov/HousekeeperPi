@@ -6,7 +6,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/quality.hpp>
 #include "imgdiff.h"
 #include "plog/Log.h"
 #include "plog/Appenders/ColorConsoleAppender.h"
@@ -31,6 +30,12 @@ int main() {
         curl_easy_setopt(curl.curlSettings, CURLOPT_SOCKS5_AUTH, CURLAUTH_BASIC);
 
         TgBot::Bot bot(token, curl);
+        ImgDiffFinder imgdiff;
+        imgdiff.onImgDiffFinded(1000, [&bot, &chat_id](double mse, std::string imgDiffPath) {
+            PLOG_INFO << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]";
+            bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
+            bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+        });
 
         bot.getEvents().onCommand("help", [&bot, &chat_id](TgBot::Message::Ptr message) {
             PLOG_INFO << "Command 'help' from " << message->chat->id;
@@ -55,14 +60,6 @@ int main() {
                 bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(imgPath, "image/png"));
             }
         });
-
-        ImgDiffFinder imgdiff;
-        auto imgDiffHandler = [&bot, &chat_id](double mse, std::string imgDiffPath) {
-            PLOG_INFO << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]";
-            bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
-            bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
-        };
-        imgdiff.run(1000, imgDiffHandler);
 
         TgBot::TgLongPoll longPoll(bot);
         PLOG_INFO << "Bot username: " << bot.getApi().getMe()->username;

@@ -1,7 +1,7 @@
 import qbs
 
 CppApplication {
-    cpp.cxxLanguageVersion: "c++17"
+    cpp.cxxLanguageVersion: "c++2a"
     consoleApplication: true
     files: [
         "imgdiff.cpp",
@@ -20,6 +20,10 @@ CppApplication {
 
     cpp.libraryPaths: [
         "/usr/local/lib/"
+    ]
+
+    cpp.cppFlags: [
+        "-fconcepts",
     ]
 
     cpp.dynamicLibraries: [

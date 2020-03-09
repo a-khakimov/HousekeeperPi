@@ -8,10 +8,11 @@
 
 class ImgDiffFinder
 {
+    typedef std::function<void (double, std::string)> ImgDiffHandler;
 public:
     ImgDiffFinder();
     virtual ~ImgDiffFinder();
-    void run(int ms, std::function<void (double, std::string)>);
+    void onImgDiffFinded(int ms, ImgDiffHandler);
 
 private:
     Timer timer;

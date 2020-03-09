@@ -21,7 +21,6 @@ bool ImgSource::isAlive()
     if (res && res->status == 200) {
         std::cout << res->body << std::endl;
     }
-
     return (res && res->status == 200 && res->body == "I am ok!");
 }
 
@@ -30,6 +29,7 @@ std::tuple<cv::Mat, bool> ImgSource::get()
     cv::Mat img;
     bool isOk = false;
     std::vector<char> inputImgArray;
+
     auto res = client->Get("/webcamera.png", [&](const char *data, uint64_t data_length) {
         inputImgArray.insert(inputImgArray.end(), data, data + data_length);
         return true;
@@ -41,6 +41,5 @@ std::tuple<cv::Mat, bool> ImgSource::get()
     }
 
     PLOG_DEBUG << "Result is - " << (isOk ? "Good" : "Bad");
-
     return std::tuple { img, isOk };
 }
