@@ -17,6 +17,7 @@ int main() {
 
         std::string proxy_host = conf["proxy_host"];
         std::string token = conf["token"];
+        int64_t chat_id = conf["chat_id"];
 
         TgBot::CurlHttpClient curl;
 
@@ -29,11 +30,12 @@ int main() {
             bot.getApi().sendMessage(message->chat->id, "Hi!");
         });
 
-        const std::string photoFilePath = "/tmp/img_23:21:08.png";
-        const std::string photoMimeType = "image/png";
-
-        bot.getEvents().onCommand("photo", [&bot, &photoFilePath, &photoMimeType](TgBot::Message::Ptr message) {
-            bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(photoFilePath, photoMimeType));
+        bot.getEvents().onCommand("photo", [&bot](TgBot::Message::Ptr message) {
+            ImgSource isrc;
+            cv::Mat img = isrc.get();
+            const std::string imgPath = "/tmp/fast.img.png";
+            cv::imwrite(imgPath, img);
+            bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(imgPath, "image/png"));
         });
 
         bot.getEvents().onAnyMessage([&bot](TgBot::Message::Ptr message) {
@@ -55,10 +57,10 @@ int main() {
 
 
         ImgDiff idiff;
-        idiff.run(1000, [&bot](double mse, std::string imgDiffPath) {
+        idiff.run(1000, [&chat_id, &bot](double mse, std::string imgDiffPath) {
             std::cout << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]" << std::endl;
-            bot.getApi().sendMessage(174861972, "Found diffs with mse:" + std::to_string(mse));
-            bot.getApi().sendPhoto(174861972, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+            bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
+            bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
         });
 
         while (true) {

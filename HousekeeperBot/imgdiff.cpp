@@ -18,7 +18,6 @@ void ImgDiff::run(int ms, std::function<void (double, std::string)> f)
 {
     timer.stop();
     timer.setInterval([&]() {
-        std::cout << "Make images diff..." << std::endl;
         ImgSource isrc;
         cv::Mat img = isrc.get();
         images_queue.push(img);
