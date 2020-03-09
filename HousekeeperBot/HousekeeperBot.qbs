@@ -4,6 +4,8 @@ CppApplication {
     cpp.cxxLanguageVersion: "c++17"
     consoleApplication: true
     files: [
+        "imgdiff.cpp",
+        "imgdiff.h",
         "imgsource.cpp",
         "imgsource.h",
         "main.cpp",
@@ -15,21 +17,23 @@ CppApplication {
         "/usr/local/include/opencv4/"
     ]
 
-    cpp.dynamicLibraries: [
-        "TgBot",
-        "boost_system",
-        "ssl",
-        "crypto",
-        "curl",
-        "pthread",
-        "opencv_core",
-        "opencv_video",
-        "opencv_videoio",
-        "opencv_imgcodecs",
-        "opencv_imgproc",
+    cpp.libraryPaths: [
+        "/usr/local/lib/"
     ]
 
-    /*-lTgBot -lboost_system -lpthread -lssl -lcrypto -lcurl HAVE_CURL*/
+    cpp.dynamicLibraries: [
+        "TgBot",
+        "ssl",
+        "curl",
+        "crypto",
+        "pthread",
+        "opencv_core",
+        "opencv_quality",
+        "opencv_imgproc",
+        "opencv_imgcodecs",
+        "boost_system",
+    ]
+
     cpp.defines: [
         "HAVE_CURL"
     ]

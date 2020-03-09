@@ -6,9 +6,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-//#include <opencv2/quality.hpp>
-#include "imgsource.h"
-#include "timercpp.h"
+#include <opencv2/quality.hpp>
+#include "imgdiff.h"
 
 int main() {
     try {
@@ -21,29 +20,6 @@ int main() {
 
         TgBot::CurlHttpClient curl;
 
-        Timer t = Timer();
-        t.setInterval([&]() {
-            std::cout << "Hey.. After each 1s..." << std::endl;
-        }, 1000);
-
-        ImgSource isrc;
-        cv::Mat img1 = isrc.get();
-        cv::Mat img2 = isrc.get();
-        cv::cvtColor(img1, img1, cv::COLOR_BGR2GRAY);
-        cv::cvtColor(img2, img2, cv::COLOR_BGR2GRAY);
-        cv::Mat out;
-        cv::absdiff(img1, img2, out);
-        cv::imwrite("/tmp/bot.img.out.0.png", img1);
-        cv::imwrite("/tmp/bot.img.out.1.png", img2);
-        cv::imwrite("/tmp/bot.img.out.2.png", out);
-
-        while(1) {
-            sleep(1);
-        }
-
-
-        return 0;
-
         curl_easy_setopt(curl.curlSettings, CURLOPT_PROXY, proxy_host.c_str());
         curl_easy_setopt(curl.curlSettings, CURLOPT_SOCKS5_AUTH, CURLAUTH_BASIC);
 
@@ -52,7 +28,6 @@ int main() {
         bot.getEvents().onCommand("start", [&bot](TgBot::Message::Ptr message) {
             bot.getApi().sendMessage(message->chat->id, "Hi!");
         });
-
 
         const std::string photoFilePath = "/tmp/img_23:21:08.png";
         const std::string photoMimeType = "image/png";
@@ -78,8 +53,16 @@ int main() {
         std::cout << "Bot username: " << bot.getApi().getMe()->username << std::endl;
         TgBot::TgLongPoll longPoll(bot);
 
+
+        ImgDiff idiff;
+        idiff.run(1000, [&bot](double mse, std::string imgDiffPath) {
+            std::cout << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]" << std::endl;
+            bot.getApi().sendMessage(174861972, "Found diffs with mse:" + std::to_string(mse));
+            bot.getApi().sendPhoto(174861972, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+        });
+
         while (true) {
-            std::cout << "Long poll started" << std::endl;
+            std::cout << "Long poll..." << std::endl;
             longPoll.start();
         }
     }
@@ -89,9 +72,6 @@ int main() {
     catch (nlohmann::json::exception& e) {
         std::cerr << e.what() << std::endl;
     }
-    //catch (...) {
-    //    std::cerr << "Unknown exception" << std::endl;
-    //}
 
     return 0;
 }
