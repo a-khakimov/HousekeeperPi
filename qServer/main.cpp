@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include "httplib.h"
 
 #include <opencv2/core.hpp>
@@ -45,12 +46,13 @@ int main()
 {
     httplib::Server server;
 
-    server.Get("/hi", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content("Hello World!", "text/plain");
+    server.Get("/test", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content("I am ok!", "text/plain");
     });
 
+
     server.Get("/webcamera.png", [](const httplib::Request& req, httplib::Response& res) {
-        std::cout << "Request webcam image:" << "" << req.path << std::endl;
+        std::cout << "Request webcam image" << std::endl;
         WebCamCapture wcam;
         std::vector<uchar> img = wcam.takeImage();
         res.set_content_provider(img.size(), [img](uint64_t offset, uint64_t length, httplib::DataSink &sink) {
