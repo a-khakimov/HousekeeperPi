@@ -3,7 +3,7 @@
 	url = https://github.com/yhirose/cpp-httplib.git
 [submodule "timercpp"]
 	path = timercpp
-	url = https://github.com/99xt/timercpp.git
+	url = https://github.com/a-khakimov/timercpp.git
 [submodule "plog"]
 	path = plog
 	url = https://github.com/SergiusTheBest/plog.git
