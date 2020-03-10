@@ -1,7 +1,7 @@
 import qbs
 
 CppApplication {
-    cpp.cxxLanguageVersion: "c++2a"
+    cpp.cxxLanguageVersion: "c++17"
     consoleApplication: true
     files: [
         "imgdiff.cpp",
@@ -15,6 +15,7 @@ CppApplication {
         "../cpp-httplib",
         "../timercpp",
         "../plog/include/",
+        "..cxxopts/include/",
         "/usr/local/include/opencv4/"
     ]
 
