@@ -61,10 +61,13 @@ int main(int argc, char** argv) {
 
         TgBot::Bot bot(token, curl);
         ImgDiffFinder imgdiff;
-        imgdiff.onImgDiffFinded(1000, [&bot, &chat_id](double mse, std::string imgDiffPath) {
-            PLOG_INFO << "Found diffs with mse=" << mse << " [" << imgDiffPath << "]";
-            bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
-            bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+        imgdiff.onImgDiffFinded(1000, [&bot, &chat_id](double mse, std::string imgDiffPath, bool isOk) {
+            if (isOk) {
+                bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
+                bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+            } else {
+                bot.getApi().sendMessage(chat_id, "PiCameraServer is not avaliable");
+            }
         });
 
         bot.getEvents().onCommand("help", [&bot, &chat_id](TgBot::Message::Ptr message) {
@@ -81,7 +84,7 @@ int main(int argc, char** argv) {
             if (message->chat->id == chat_id) {
                 ImgSource isrc;
                 auto [ img, isOk ] = isrc.get();
-                        if (not isOk) {
+                if (not isOk) {
                     PLOG_INFO << "is not ok";
                     return;
                 }

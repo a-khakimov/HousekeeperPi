@@ -40,6 +40,5 @@ std::tuple<cv::Mat, bool> ImgSource::get()
         isOk = true;
     }
 
-    PLOG_DEBUG << "Result is - " << (isOk ? "Good" : "Bad");
     return std::tuple { img, isOk };
 }

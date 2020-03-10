@@ -22,7 +22,9 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
         ImgSource isrc;
 
         auto [ img, isOk ] = isrc.get();
-                if (not isOk and not img.empty()) {
+        if (not isOk) {
+            PLOG_ERROR << "PiCameraServer is not avaliable";
+            handler(0, "", false);
             return;
         }
 
@@ -49,7 +51,8 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
                 cv::vconcat(concatImgAImgB, diffImg, concatImgAImgBDiffImg);
                 std::string imgPath = "/tmp/diffImg.png";
                 cv::imwrite(imgPath, concatImgAImgBDiffImg);
-                handler(mse.val[0], imgPath);
+                PLOG_INFO << "Found diffs with mse " << mse << ". Image diff saved (" << imgPath << ")";
+                handler(mse.val[0], imgPath, true);
             }
         }
     }, ms);

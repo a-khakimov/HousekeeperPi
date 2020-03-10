@@ -8,7 +8,7 @@
 
 class ImgDiffFinder
 {
-    typedef std::function<void (double, std::string)> ImgDiffHandler;
+    typedef std::function <void (double, std::string, bool)> ImgDiffHandler;
 public:
     ImgDiffFinder();
     virtual ~ImgDiffFinder();
