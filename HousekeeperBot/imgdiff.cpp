@@ -1,3 +1,9 @@
+/** 
+ *  @file   imgdiff.cpp
+ *  @brief  Get diff for images 
+ *  @author a-khakimov 
+ ***********************************************/
+
 #include "imgdiff.h"
 #include "plog/Log.h"
 
@@ -15,6 +21,10 @@ ImgDiffFinder::~ImgDiffFinder()
 
 }
 
+/*!
+  \fn void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
+    Blah blah
+*/
 void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
 {
     timer.setInterval([=]() {

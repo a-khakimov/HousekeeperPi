@@ -1,3 +1,8 @@
+/** 
+ *  @file   main.cpp 
+ *  @author a-khakimov 
+ ***********************************************/
+
 #include <stdio.h>
 #include <tgbot/tgbot.h>
 #include <tgbot/net/CurlHttpClient.h>
@@ -11,6 +16,10 @@
 #include "cxxopts.hpp"
 #include "imgdiff.h"
 
+/*!
+  \fn auto options(int argc, char** argv)
+    Blah blah
+*/
 auto options(int argc, char** argv)
 {
     try {

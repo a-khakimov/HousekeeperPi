@@ -1,3 +1,9 @@
+/** 
+ *  @file   imgsource.cpp 
+ *  @brief  Get image from http-server 
+ *  @author a-khakimov 
+ ***********************************************/
+
 #include "imgsource.h"
 
 #include "plog/Log.h"
@@ -15,6 +21,10 @@ ImgSource::~ImgSource()
 
 }
 
+/*!
+  \fn bool ImgSource::isAlive()
+    Blah blah
+*/
 bool ImgSource::isAlive()
 {
     auto res = client->Get("/test");
@@ -24,6 +34,10 @@ bool ImgSource::isAlive()
     return (res && res->status == 200 && res->body == "I am ok!");
 }
 
+/*!
+  \fn std::tuple<cv::Mat, bool> ImgSource::get()
+    Blah blah
+*/
 std::tuple<cv::Mat, bool> ImgSource::get()
 {
     cv::Mat img;

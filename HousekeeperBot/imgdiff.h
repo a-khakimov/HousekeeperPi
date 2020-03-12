@@ -1,3 +1,9 @@
+/** 
+ *  @file   imgdiff.h 
+ *  @brief  Get diff for images 
+ *  @author a-khakimov 
+ ***********************************************/
+
 #ifndef IMGDIFF_H
 #define IMGDIFF_H
 

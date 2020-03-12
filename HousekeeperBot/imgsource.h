@@ -1,3 +1,9 @@
+/** 
+ *  @file   imgsource.h
+ *  @brief  Get image from http-server 
+ *  @author a-khakimov 
+ ***********************************************/
+
 #ifndef IMGSOURCE_H
 #define IMGSOURCE_H
 
@@ -5,6 +11,7 @@
 #include <tuple>
 #include <opencv2/core.hpp>
 #include "httplib.h"
+
 
 class ImgSource
 {
