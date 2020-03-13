@@ -43,3 +43,4 @@ TODO
 * [plog](https://github.com/SergiusTheBest/plog) - логгер
 * [cpp-httplib](https://github.com/yhirose/cpp-httplib) - используется для получения изображений от http-сервера
 * [cxxopts]() - используется для парсинга аргументов коммандной строки
+* [json](https://github.com/nlohmann/json.git) - для работы с json-файлами
