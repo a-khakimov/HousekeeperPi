@@ -61,7 +61,13 @@ int main(int argc, char** argv) {
 
         std::string proxy_host = conf["proxy_host"];
         std::string token = conf["token"];
-        int64_t chat_id = conf["chat_id"];
+        int64_t chat_id = 0;
+        try {
+            chat_id = conf["chat_id"];
+        }
+        catch (nlohmann::json::exception& e) {
+            PLOG_WARNING << "chat_id is empty";
+        }
 
         TgBot::CurlHttpClient curl;
 
@@ -71,11 +77,15 @@ int main(int argc, char** argv) {
         TgBot::Bot bot(token, curl);
         ImgDiffFinder imgdiff;
         imgdiff.onImgDiffFinded(1000, [&bot, &chat_id](double mse, std::string imgDiffPath, bool isOk) {
-            if (isOk) {
-                bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
-                bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+            if (chat_id) {
+                if (isOk) {
+                    bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
+                    bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+                } else {
+                    bot.getApi().sendMessage(chat_id, "PiCameraServer is not avaliable");
+                }
             } else {
-                bot.getApi().sendMessage(chat_id, "PiCameraServer is not avaliable");
+                PLOG_WARNING << "chat_id is empty";
             }
         });
 
@@ -85,7 +95,15 @@ int main(int argc, char** argv) {
                 const std::string help = "/help - help message\n"
                                          "/photo - take photo and send";
                 bot.getApi().sendMessage(message->chat->id, help);
+            } else {
+                PLOG_WARNING << "User " << message->chat->id << " does not have rights.";
             }
+        });
+
+        bot.getEvents().onCommand("myid", [&bot](TgBot::Message::Ptr message) {
+            PLOG_INFO << "Command 'myid' from " << message->chat->id;
+            const std::string msg("Your id is: " + std::to_string(message->chat->id));
+            bot.getApi().sendMessage(message->chat->id, msg);
         });
 
         bot.getEvents().onCommand("photo", [&bot, &chat_id](TgBot::Message::Ptr message) {
@@ -100,6 +118,8 @@ int main(int argc, char** argv) {
                 const std::string imgPath = "/tmp/fast.img.png";
                 cv::imwrite(imgPath, img);
                 bot.getApi().sendPhoto(message->chat->id, TgBot::InputFile::fromFile(imgPath, "image/png"));
+            } else {
+                PLOG_WARNING << "User " << message->chat->id << " does not have rights.";
             }
         });
 
