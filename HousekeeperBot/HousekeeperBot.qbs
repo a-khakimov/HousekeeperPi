@@ -4,10 +4,12 @@ CppApplication {
     cpp.cxxLanguageVersion: "c++17"
     consoleApplication: true
     files: [
+        "DogBot.cpp",
+        "DogBot.h",
+        "HttpCamera.cpp",
+        "HttpCamera.h",
         "imgdiff.cpp",
         "imgdiff.h",
-        "imgsource.cpp",
-        "imgsource.h",
         "main.cpp",
     ]
 

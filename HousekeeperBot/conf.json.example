@@ -1,4 +1,8 @@
 {
 	"token" : "",
-	"proxy_host" : "socks5://localhost:9050"
+	"proxy_host" : "socks5://localhost:9050",
+	"http_cameras": [
+		{ "host" : "192.168.0.2", "port" : 1234, "path" : "webcamera.png"  },
+		{ "host" : "192.168.0.5", "port" : 1234, "path" : "webcamera.png"  }
+	]
 }

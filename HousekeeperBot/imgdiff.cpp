@@ -29,9 +29,9 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
 {
     timer.setInterval([=]() {
         PLOG_DEBUG << "Timeout";
-        ImgSource isrc;
+        HttpCamera camera("localhost", 1234, "webcamera.png");
 
-        auto [ img, isOk ] = isrc.get();
+        auto [ img, isOk ] = camera.get();
         if (not isOk) {
             PLOG_ERROR << "PiCameraServer is not avaliable";
             handler(0, "", false);

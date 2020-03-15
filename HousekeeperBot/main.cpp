@@ -3,6 +3,7 @@
  *  @author a-khakimov 
  ***********************************************/
 
+#include <list>
 #include <stdio.h>
 #include <tgbot/tgbot.h>
 #include <tgbot/net/CurlHttpClient.h>
@@ -47,6 +48,31 @@ auto options(int argc, char** argv)
     }
 }
 
+auto configurations(const std::string& confFile)
+{
+    std::ifstream i(confFile);
+    nlohmann::json conf;
+    i >> conf;
+
+    std::string proxy_host = conf["proxy_host"];
+    std::string token = conf["token"];
+    int64_t chat_id = 0;
+    try {
+        chat_id = conf["chat_id"];
+    }
+    catch (nlohmann::json::exception& e) {
+        PLOG_WARNING << "chat_id is empty";
+    }
+
+    std::list<HttpCamera> cameras;
+    for (auto cam_cfg : conf["http_cameras"]) {
+        HttpCamera cam(cam_cfg["host"], cam_cfg["port"], cam_cfg["path"]);
+        cameras.push_back(cam);
+    }
+
+    return std::tuple { proxy_host, token, chat_id, cameras };
+}
+
 
 int main(int argc, char** argv) {
     try {
@@ -55,19 +81,9 @@ int main(int argc, char** argv) {
         static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
         plog::init(plog::verbose, logFile.c_str()).addAppender(&consoleAppender);
 
-        std::ifstream i(confFile);
-        nlohmann::json conf;
-        i >> conf;
+        const auto [proxy_host, token, chat_id, cameras] = configurations(confFile);
 
-        std::string proxy_host = conf["proxy_host"];
-        std::string token = conf["token"];
-        int64_t chat_id = 0;
-        try {
-            chat_id = conf["chat_id"];
-        }
-        catch (nlohmann::json::exception& e) {
-            PLOG_WARNING << "chat_id is empty";
-        }
+        return 0;
 
         TgBot::CurlHttpClient curl;
 
@@ -109,8 +125,8 @@ int main(int argc, char** argv) {
         bot.getEvents().onCommand("photo", [&bot, &chat_id](TgBot::Message::Ptr message) {
             PLOG_INFO << "Command 'photo' from " << message->chat->id;
             if (message->chat->id == chat_id) {
-                ImgSource isrc;
-                auto [ img, isOk ] = isrc.get();
+                HttpCamera camera("localhost", 1234, "webcamera.png");
+                auto [ img, isOk ] = camera.get();
                 if (not isOk) {
                     PLOG_INFO << "is not ok";
                     return;

@@ -7,7 +7,7 @@
 #ifndef IMGDIFF_H
 #define IMGDIFF_H
 
-#include "imgsource.h"
+#include "HttpCamera.h"
 #include "timercpp.h"
 #include <functional>
 #include <queue>
@@ -22,7 +22,6 @@ public:
 
 private:
     Timer timer;
-    ImgSource isrc;
     std::queue<cv::Mat> images_queue;
 };
 
