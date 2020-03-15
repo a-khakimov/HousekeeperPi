@@ -56,12 +56,10 @@ auto configurations(const std::string& confFile)
 
     std::string proxy_host = conf["proxy_host"];
     std::string token = conf["token"];
-    int64_t chat_id = 0;
-    try {
-        chat_id = conf["chat_id"];
-    }
-    catch (nlohmann::json::exception& e) {
-        PLOG_WARNING << "chat_id is empty";
+
+    std::list<uint64_t> chats;
+    for (auto chat : conf["chats"]) {
+        chats.push_back(chat);
     }
 
     std::list<HttpCamera> cameras;
@@ -70,20 +68,40 @@ auto configurations(const std::string& confFile)
         cameras.push_back(cam);
     }
 
-    return std::tuple { proxy_host, token, chat_id, cameras };
+    return std::tuple { proxy_host, token, chats, cameras };
+}
+
+void doStart()
+{
+
 }
 
 
+void doStop()
+{
+
+}
+
+
+void doHelp()
+{
+
+}
+
+void doMyId()
+{
+
+}
+
 int main(int argc, char** argv) {
     try {
-        auto [logFile, confFile] = options(argc, argv);
+        const auto [logFile, confFile] = options(argc, argv);
 
         static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
         plog::init(plog::verbose, logFile.c_str()).addAppender(&consoleAppender);
 
-        const auto [proxy_host, token, chat_id, cameras] = configurations(confFile);
-
-        return 0;
+        const auto [proxy_host, token, chat, cameras] = configurations(confFile);
+        const std::list chats = chat;
 
         TgBot::CurlHttpClient curl;
 
@@ -92,22 +110,40 @@ int main(int argc, char** argv) {
 
         TgBot::Bot bot(token, curl);
         ImgDiffFinder imgdiff;
-        imgdiff.onImgDiffFinded(1000, [&bot, &chat_id](double mse, std::string imgDiffPath, bool isOk) {
-            if (chat_id) {
-                if (isOk) {
-                    bot.getApi().sendMessage(chat_id, "Found diffs with mse:" + std::to_string(mse));
-                    bot.getApi().sendPhoto(chat_id, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
-                } else {
-                    bot.getApi().sendMessage(chat_id, "PiCameraServer is not avaliable");
+        imgdiff.onImgDiffFinded(1000, [&bot, &chats](double mse, std::string imgDiffPath, bool isOk) {
+            if (not chats.empty()) {
+                for (const auto& chat : chats) {
+                    if (isOk) {
+                        bot.getApi().sendMessage(chat, "Found diffs with mse:" + std::to_string(mse));
+                        bot.getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+                    } else {
+                        bot.getApi().sendMessage(chat, "PiCameraServer is not avaliable");
+                    }
                 }
             } else {
                 PLOG_WARNING << "chat_id is empty";
             }
         });
 
-        bot.getEvents().onCommand("help", [&bot, &chat_id](TgBot::Message::Ptr message) {
+        imgdiff.onImgDiffFinded(1000, [&bot, &chats](double mse, std::string imgDiffPath, bool isOk) {
+            if (not chats.empty()) {
+                for (const auto& chat : chats) {
+                    if (isOk) {
+                        bot.getApi().sendMessage(chat, "Found diffs with mse:" + std::to_string(mse));
+                        bot.getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+                    } else {
+                        bot.getApi().sendMessage(chat, "PiCameraServer is not avaliable");
+                    }
+                }
+            } else {
+                PLOG_WARNING << "chat_id is empty";
+            }
+        });
+
+        bot.getEvents().onCommand("help", [&bot, &chats](TgBot::Message::Ptr message) {
             PLOG_INFO << "Command 'help' from " << message->chat->id;
-            if (message->chat->id == chat_id) {
+            const bool found = std::find(chats.begin(), chats.end(), message->chat->id) != chats.end();
+            if (found) {
                 const std::string help = "/help - help message\n"
                                          "/photo - take photo and send";
                 bot.getApi().sendMessage(message->chat->id, help);
@@ -122,10 +158,22 @@ int main(int argc, char** argv) {
             bot.getApi().sendMessage(message->chat->id, msg);
         });
 
-        bot.getEvents().onCommand("photo", [&bot, &chat_id](TgBot::Message::Ptr message) {
+
+        // TODO: start
+        bot.getEvents().onCommand("start", [&bot](TgBot::Message::Ptr message) {
+
+        });
+
+        // TODO: stop
+        bot.getEvents().onCommand("stop", [&bot](TgBot::Message::Ptr message) {
+
+        });
+
+        bot.getEvents().onCommand("photo", [&bot, &chats](TgBot::Message::Ptr message) {
             PLOG_INFO << "Command 'photo' from " << message->chat->id;
-            if (message->chat->id == chat_id) {
-                HttpCamera camera("localhost", 1234, "webcamera.png");
+            const bool found = std::find(chats.begin(), chats.end(), message->chat->id) != chats.end();
+            if (found) {
+                HttpCamera camera("localhost", 1234, "/webcamera.png");
                 auto [ img, isOk ] = camera.get();
                 if (not isOk) {
                     PLOG_INFO << "is not ok";
