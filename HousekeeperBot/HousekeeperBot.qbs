@@ -4,13 +4,13 @@ CppApplication {
     cpp.cxxLanguageVersion: "c++17"
     consoleApplication: true
     files: [
-        "DogBot.cpp",
-        "DogBot.h",
         "HttpCamera.cpp",
         "HttpCamera.h",
         "imgdiff.cpp",
         "imgdiff.h",
         "main.cpp",
+        "watcherbot.cpp",
+        "watcherbot.h",
     ]
 
     cpp.includePaths: [
