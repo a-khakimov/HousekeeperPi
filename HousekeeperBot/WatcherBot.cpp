@@ -43,6 +43,7 @@ void WatcherBot::init()
     }
 
     for (auto camera : cameras) {
+        PLOG_INFO << "Use camera " << camera.info();
         diff_finders.push_back(ImgDiffFinder(camera));
     }
 
@@ -131,7 +132,8 @@ void WatcherBot::doPhoto(const int64_t id)
         for (auto camera : cameras) {
             auto [ img, isOk ] = camera.get();
             if (not isOk) {
-                PLOG_INFO << "is not ok";
+                PLOG_INFO << "Camera " << camera.info() << " is not avaliable" ;
+                bot->getApi().sendMessage(id, "Camera " + camera.info() + " is not avaliable");
                 return;
             }
             const std::string imgPath = "/tmp/fast.img.png";

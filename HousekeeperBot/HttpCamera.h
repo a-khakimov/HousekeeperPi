@@ -20,10 +20,12 @@ public:
     virtual ~HttpCamera();
 
     std::tuple<cv::Mat, bool> get();
+    std::string info() const;
 
 private:
     std::shared_ptr<httplib::Client> _client;
     std::string _path;
+    std::string _info;
 };
 
 #endif // HttpCamera_H

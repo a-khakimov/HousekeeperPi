@@ -13,6 +13,7 @@
 
 HttpCamera::HttpCamera(const std::string& host, const uint64_t port, const std::string& path) : _path(path)
 {
+    _info += host + ":" + std::to_string(port) + path;
     _client = std::make_shared<httplib::Client>(host, port);
 }
 
@@ -42,4 +43,9 @@ std::tuple<cv::Mat, bool> HttpCamera::get()
     }
 
     return std::tuple { img, isOk };
+}
+
+std::string HttpCamera::info() const
+{
+    return _info;
 }
