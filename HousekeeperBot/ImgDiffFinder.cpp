@@ -1,10 +1,10 @@
 /** 
- *  @file   imgdiff.cpp
+ *  @file   ImgDiffFinder.cpp
  *  @brief  Get diff for images 
  *  @author a-khakimov 
  ***********************************************/
 
-#include "imgdiff.h"
+#include "ImgDiffFinder.h"
 #include "plog/Log.h"
 
 #include <opencv2/imgcodecs.hpp>
@@ -13,7 +13,14 @@
 
 ImgDiffFinder::ImgDiffFinder()
 {
+    p_camera = nullptr;
     timer = Timer();
+}
+
+ImgDiffFinder::ImgDiffFinder(HttpCamera& camera)
+{
+    timer = Timer();
+    p_camera = &camera;
 }
 
 ImgDiffFinder::~ImgDiffFinder()
@@ -27,11 +34,10 @@ ImgDiffFinder::~ImgDiffFinder()
 */
 void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
 {
-    timer.setInterval([=]() {
+    timer.setInterval([this, &handler]() {
         PLOG_DEBUG << "Timeout";
-        HttpCamera camera("localhost", 1234, "webcamera.png");
 
-        auto [ img, isOk ] = camera.get();
+        auto [ img, isOk ] = p_camera->get();
         if (not isOk) {
             PLOG_ERROR << "PiCameraServer is not avaliable";
             handler(0, "", false);
@@ -66,4 +72,9 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
             }
         }
     }, ms);
+}
+
+void ImgDiffFinder::setCamera(HttpCamera& camera)
+{
+    p_camera = &camera;
 }

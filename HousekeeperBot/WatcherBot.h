@@ -5,20 +5,21 @@
 #include <memory>
 #include <tgbot/tgbot.h>
 #include <tgbot/net/CurlHttpClient.h>
-#include "imgdiff.h"
+#include "ImgDiffFinder.h"
 
 class WatcherBot
 {
 public:
-    WatcherBot(const std::string& token, const std::list<uint64_t>& chat_list);
-    WatcherBot(const std::string& token, const std::list<uint64_t>& chat_list, const std::string& proxy);
+    WatcherBot(const std::string& token, const std::list<uint64_t>& chat_list, const std::list<HttpCamera>& cameras);
+    WatcherBot(const std::string& token, const std::list<uint64_t>& chat_list, const std::list<HttpCamera>& cameras, const std::string& proxy);
     ~WatcherBot();
 
 private:
     std::shared_ptr<TgBot::Bot> bot;
     TgBot::CurlHttpClient curl;
     std::list<uint64_t> chat_list;
-    ImgDiffFinder idf;
+    std::list<ImgDiffFinder> diff_finders;
+    std::list<HttpCamera> cameras;
 
     void init();
     void doStart(const int64_t id);

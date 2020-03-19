@@ -6,11 +6,11 @@ CppApplication {
     files: [
         "HttpCamera.cpp",
         "HttpCamera.h",
-        "imgdiff.cpp",
-        "imgdiff.h",
+        "ImgDiffFinder.cpp",
+        "ImgDiffFinder.h",
+        "WatcherBot.cpp",
+        "WatcherBot.h",
         "main.cpp",
-        "watcherbot.cpp",
-        "watcherbot.h",
     ]
 
     cpp.includePaths: [

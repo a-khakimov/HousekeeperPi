@@ -11,7 +11,7 @@
 #include "plog/Appenders/ColorConsoleAppender.h"
 #include "cxxopts.hpp"
 #include "HttpCamera.h"
-#include "watcherbot.h"
+#include "WatcherBot.h"
 
 /*!
   \fn auto options(int argc, char** argv)
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
         plog::init(plog::verbose, logFile.c_str()).addAppender(&consoleAppender);
 
-        WatcherBot bot(token, chats_list, proxy_host);
+        WatcherBot bot(token, chats_list, cameras, proxy_host);
     }
     catch (TgBot::TgException& e) {
         PLOG_ERROR << e.what();
