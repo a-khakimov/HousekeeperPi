@@ -15,10 +15,9 @@
 
 class ImgDiffFinder
 {
-    typedef std::function <void (double, std::string, bool)> ImgDiffHandler;
+    typedef std::function <void (const double, const std::string&, const bool)> ImgDiffHandler;
 public:
-    ImgDiffFinder();
-    ImgDiffFinder(HttpCamera&);
+    explicit ImgDiffFinder(HttpCamera&);
     virtual ~ImgDiffFinder();
 
     void onImgDiffFinded(int ms, ImgDiffHandler);
@@ -26,7 +25,7 @@ public:
 
 private:
     Timer timer;
-    HttpCamera* p_camera;
+    HttpCamera _camera;
     std::queue<cv::Mat> images_queue;
 };
 

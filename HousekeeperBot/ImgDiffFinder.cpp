@@ -11,16 +11,9 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/quality.hpp>
 
-ImgDiffFinder::ImgDiffFinder()
-{
-    p_camera = nullptr;
-    timer = Timer();
-}
-
-ImgDiffFinder::ImgDiffFinder(HttpCamera& camera)
+ImgDiffFinder::ImgDiffFinder(HttpCamera& camera) : _camera(camera)
 {
     timer = Timer();
-    p_camera = &camera;
 }
 
 ImgDiffFinder::~ImgDiffFinder()
@@ -34,13 +27,13 @@ ImgDiffFinder::~ImgDiffFinder()
 */
 void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
 {
-    timer.setInterval([this, &handler]() {
+    timer.setInterval([this, handler]() {
         PLOG_DEBUG << "Timeout";
 
-        auto [ img, isOk ] = p_camera->get();
+        auto [ img, isOk ] = _camera.get();
         if (not isOk) {
-            PLOG_ERROR << "PiCameraServer is not avaliable";
-            handler(0, "", false);
+            PLOG_WARNING << _camera.info() << " is not avaliable";
+            //handler(0, "", false);
             return;
         }
 
@@ -56,18 +49,21 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
             cv::cvtColor(imgB, gray_imgB, cv::COLOR_BGR2GRAY);
 
             cv::Scalar mse = cv::quality::QualityMSE::compute(gray_imgA, gray_imgB, cv::noArray());
-            PLOG_VERBOSE << "MSE:" << mse;
+            PLOG_VERBOSE << "MSE:" << mse << ", camera: " << _camera.info();
 
             if (mse.val[0] >= 50) {
                 cv::Mat diffImg;
                 cv::absdiff(imgA, imgB, diffImg);
                 cv::Mat concatImgAImgB;
-                cv::vconcat(imgA, imgB, concatImgAImgB);
+                cv::hconcat(imgA, imgB, concatImgAImgB);
                 cv::Mat concatImgAImgBDiffImg;
-                cv::vconcat(concatImgAImgB, diffImg, concatImgAImgBDiffImg);
-                std::string imgPath = "/tmp/diffImg.png";
+                cv::hconcat(concatImgAImgB, diffImg, concatImgAImgBDiffImg);
+                std::string cam_info = _camera.info();
+                std::replace(cam_info.begin(), cam_info.end(), '/', '.');
+                std::replace(cam_info.begin(), cam_info.end(), ' ', '_');
+                const std::string imgPath = "/tmp/img_diff_" + cam_info + ".png";
                 cv::imwrite(imgPath, concatImgAImgBDiffImg);
-                PLOG_INFO << "Found diffs with mse " << mse << ". Image diff saved (" << imgPath << ")";
+                PLOG_INFO << "DIFF:" << _camera.info() << " MSE:" << mse << " PATH:" << imgPath;
                 handler(mse.val[0], imgPath, true);
             }
         }
@@ -76,5 +72,5 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
 
 void ImgDiffFinder::setCamera(HttpCamera& camera)
 {
-    p_camera = &camera;
+    _camera = camera;
 }

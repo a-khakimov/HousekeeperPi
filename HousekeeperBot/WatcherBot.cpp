@@ -8,7 +8,7 @@ WatcherBot::WatcherBot(
         const std::string& token,
         const std::list<uint64_t>& chat_list,
         const std::list<HttpCamera>& cameras
-) : chat_list(chat_list), cameras(cameras)
+) : chat_list(chat_list), cameras(cameras), botState(BotState::run)
 {
     bot = std::make_shared<TgBot::Bot>(token);
     init();
@@ -19,7 +19,7 @@ WatcherBot::WatcherBot(
         const std::list<uint64_t>& chat_list,
         const std::list<HttpCamera>& cameras,
         const std::string &proxy
-) : chat_list(chat_list), cameras(cameras)
+) : chat_list(chat_list), cameras(cameras), botState(BotState::run)
 {
     curl_easy_setopt(curl.curlSettings, CURLOPT_PROXY, proxy.c_str());
     curl_easy_setopt(curl.curlSettings, CURLOPT_SOCKS5_AUTH, CURLAUTH_BASIC);
@@ -42,28 +42,22 @@ void WatcherBot::init()
         return;
     }
 
-    for (auto camera : cameras) {
+    for (auto& camera : cameras) {
         PLOG_INFO << "Use camera " << camera.info();
-        diff_finders.push_back(ImgDiffFinder(camera));
+        ImgDiffFinder* idf = new ImgDiffFinder(camera);
+        diff_finders.push_back(idf);
     }
 
-    for (auto img_diff_finder : diff_finders) {
-        img_diff_finder.onImgDiffFinded(1000, [this](double mse, std::string imgDiffPath, bool isOk) {
-            if (not chat_list.empty()) {
-                for (const auto& chat : chat_list) {
-                    if (isOk) {
-                        bot->getApi().sendMessage(chat, "Found diffs with mse:" + std::to_string(mse));
-                        bot->getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
-                    } else {
-                        bot->getApi().sendMessage(chat, "PiCameraServer is not avaliable");
-                    }
+    for (auto& finder : diff_finders) {
+        finder->onImgDiffFinded(1000, [this](const double mse, const std::string& imgDiffPath, const bool isOk) {
+            (void)mse; // unused
+            if (isOk) {
+                if (botState == BotState::run) {
+                    sendImageDiffToChat(imgDiffPath);
                 }
-            } else {
-                PLOG_WARNING << "chat_id is empty";
             }
         });
     }
-
 
     bot->getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
         doHelp(message->chat->id);
@@ -94,14 +88,37 @@ void WatcherBot::init()
     }
 }
 
+void WatcherBot::sendImageDiffToChat(const std::string& imgDiffPath)
+{
+    for (const auto& chat : chat_list) {
+        // TODO: set mse value to image
+        //bot->getApi().sendMessage(chat, "Found diffs with mse:" + std::to_string(mse));
+        bot->getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+    }
+}
+
 void WatcherBot::doStart(const int64_t id)
 {
+    PLOG_INFO << "Command 'start' from " << id;
 
+    if (botState == BotState::run) {
+        bot->getApi().sendMessage(id, "Bot already was started");
+    } else {
+        botState = BotState::run;
+        bot->getApi().sendMessage(id, "Running...");
+    }
 }
 
 void WatcherBot::doStop(const int64_t id)
 {
+    PLOG_INFO << "Command 'stop' from " << id;
 
+    if (botState == BotState::sleep) {
+        bot->getApi().sendMessage(id, "Bot already was stoped");
+    } else {
+        botState = BotState::sleep;
+        bot->getApi().sendMessage(id, "Stop!");
+    }
 }
 
 void WatcherBot::doHelp(const int64_t id)
@@ -134,7 +151,7 @@ void WatcherBot::doPhoto(const int64_t id)
             if (not isOk) {
                 PLOG_INFO << "Camera " << camera.info() << " is not avaliable" ;
                 bot->getApi().sendMessage(id, "Camera " + camera.info() + " is not avaliable");
-                return;
+                continue;
             }
             const std::string imgPath = "/tmp/fast.img.png";
             cv::imwrite(imgPath, img);
@@ -148,5 +165,7 @@ void WatcherBot::doPhoto(const int64_t id)
 
 WatcherBot::~WatcherBot()
 {
-
+    for (auto& finder : diff_finders) {
+        delete finder;
+    }
 }
