@@ -8,9 +8,9 @@ WatcherBot::WatcherBot(
         const std::string& token,
         const std::list<uint64_t>& chat_list,
         const std::list<HttpCamera>& cameras
-) : chat_list(chat_list), cameras(cameras), botState(BotState::run)
+) :  _botState(BotState::run), _chat_list(chat_list), _cameras(cameras)
 {
-    bot = std::make_shared<TgBot::Bot>(token);
+    _bot = std::make_shared<TgBot::Bot>(token);
     init();
 }
 
@@ -19,68 +19,70 @@ WatcherBot::WatcherBot(
         const std::list<uint64_t>& chat_list,
         const std::list<HttpCamera>& cameras,
         const std::string &proxy
-) : chat_list(chat_list), cameras(cameras), botState(BotState::run)
+) :  _botState(BotState::run), _chat_list(chat_list), _cameras(cameras)
 {
-    curl_easy_setopt(curl.curlSettings, CURLOPT_PROXY, proxy.c_str());
-    curl_easy_setopt(curl.curlSettings, CURLOPT_SOCKS5_AUTH, CURLAUTH_BASIC);
-
-    bot = std::make_shared<TgBot::Bot>(token, curl);
+    curl_easy_setopt(_curl.curlSettings, CURLOPT_PROXY, proxy.c_str());
+    curl_easy_setopt(_curl.curlSettings, CURLOPT_SOCKS5_AUTH, CURLAUTH_BASIC);
+    _bot = std::make_shared<TgBot::Bot>(token, _curl);
     init();
 }
 
 void WatcherBot::init()
 {
-    if (chat_list.empty()) {
+    if (_chat_list.empty()) {
         // TODO: throw exception
         PLOG_ERROR << "Chat id list is empty";
         return;
     }
 
-    if (cameras.empty()) {
+    if (_cameras.empty()) {
         // TODO: throw exception
         PLOG_ERROR << "Camera list is empty";
         return;
     }
 
-    for (auto& camera : cameras) {
+    for (auto& camera : _cameras) {
         PLOG_INFO << "Use camera " << camera.info();
         ImgDiffFinder* idf = new ImgDiffFinder(camera);
-        diff_finders.push_back(idf);
+        _diff_finders.push_back(idf);
     }
 
-    for (auto& finder : diff_finders) {
-        finder->onImgDiffFinded(1000, [this](const double mse, const std::string& imgDiffPath, const bool isOk) {
-            (void)mse; // unused
+    for (auto& finder : _diff_finders) {
+        finder->onImgDiffFinded(1000, [this](const std::string& imgDiffPath, const bool isOk) {
             if (isOk) {
-                if (botState == BotState::run) {
+                if (_botState == BotState::run) {
                     sendImageDiffToChat(imgDiffPath);
                 }
             }
         });
     }
 
-    bot->getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
-        doHelp(message->chat->id);
+    _bot->getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
+        doCmdHelp(message->chat->id);
     });
 
-    bot->getEvents().onCommand("myid", [this](TgBot::Message::Ptr message) {
-        doMyId(message->chat->id);
+    _bot->getEvents().onCommand("id", [this](TgBot::Message::Ptr message) {
+        doCmdId(message->chat->id);
     });
 
-    bot->getEvents().onCommand("start", [this](TgBot::Message::Ptr message) {
-        doStart(message->chat->id);
+    _bot->getEvents().onCommand("start", [this](TgBot::Message::Ptr message) {
+        doCmdStart(message->chat->id);
     });
 
-    bot->getEvents().onCommand("stop", [this](TgBot::Message::Ptr message) {
-        doStop(message->chat->id);
+    _bot->getEvents().onCommand("stop", [this](TgBot::Message::Ptr message) {
+        doCmdStop(message->chat->id);
     });
 
-    bot->getEvents().onCommand("photo", [this](TgBot::Message::Ptr message) {
-        doPhoto(message->chat->id);
+    _bot->getEvents().onCommand("photo", [this](TgBot::Message::Ptr message) {
+        doCmdPhoto(message->chat->id);
     });
 
-    TgBot::TgLongPoll longPoll(*bot);
-    PLOG_INFO << "Bot username: " << bot->getApi().getMe()->username;
+    _bot->getEvents().onCommand("list", [this](TgBot::Message::Ptr message) {
+        doCmdCamList(message->chat->id);
+    });
+
+    TgBot::TgLongPoll longPoll(*_bot);
+    PLOG_INFO << "Bot username: " << _bot->getApi().getMe()->username;
 
     while (true) {
         PLOG_INFO << "Long poll...";
@@ -90,82 +92,100 @@ void WatcherBot::init()
 
 void WatcherBot::sendImageDiffToChat(const std::string& imgDiffPath)
 {
-    for (const auto& chat : chat_list) {
-        // TODO: set mse value to image
-        //bot->getApi().sendMessage(chat, "Found diffs with mse:" + std::to_string(mse));
-        bot->getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
+    for (const auto& chat : _chat_list) {
+        _bot->getApi().sendPhoto(chat, TgBot::InputFile::fromFile(imgDiffPath, "image/png"));
     }
 }
 
-void WatcherBot::doStart(const int64_t id)
+void WatcherBot::doCmdCamList(const int64_t id)
+{
+    PLOG_INFO << "Command 'list' from " << id;
+    if (isUserHasRights(id)) {
+        std::string msg;
+        for (auto camera : _cameras) {
+            msg += camera.info() + "\n";
+        }
+        _bot->getApi().sendMessage(id, msg);
+    } else {
+        _bot->getApi().sendMessage(id, "You doesn't have rights");
+        PLOG_WARNING << "User " << id << " does not have rights.";
+    }
+}
+
+void WatcherBot::doCmdStart(const int64_t id)
 {
     PLOG_INFO << "Command 'start' from " << id;
-
-    if (botState == BotState::run) {
-        bot->getApi().sendMessage(id, "Bot already was started");
+    if (_botState == BotState::run) {
+        _bot->getApi().sendMessage(id, "Bot already was started");
     } else {
-        botState = BotState::run;
-        bot->getApi().sendMessage(id, "Running...");
+        _botState = BotState::run;
+        _bot->getApi().sendMessage(id, "Running...");
     }
 }
 
-void WatcherBot::doStop(const int64_t id)
+void WatcherBot::doCmdStop(const int64_t id)
 {
     PLOG_INFO << "Command 'stop' from " << id;
-
-    if (botState == BotState::sleep) {
-        bot->getApi().sendMessage(id, "Bot already was stoped");
+    if (_botState == BotState::sleep) {
+        _bot->getApi().sendMessage(id, "Bot already was stoped");
     } else {
-        botState = BotState::sleep;
-        bot->getApi().sendMessage(id, "Stop!");
+        _botState = BotState::sleep;
+        _bot->getApi().sendMessage(id, "Stop!");
     }
 }
 
-void WatcherBot::doHelp(const int64_t id)
+void WatcherBot::doCmdHelp(const int64_t id)
 {
     PLOG_INFO << "Command 'help' from " << id;
-    const bool found = std::find(chat_list.begin(), chat_list.end(), id) != chat_list.end();
-    if (found) {
-        const std::string help = "/help - help message\n"
+    if (isUserHasRights(id)) {
+        const static std::string help = "/help - help message\n"
+                                 "/start - start monitoring\n"
+                                 "/stop - stop monitoring\n"
+                                 "/id - send chat id\n"
+                                 "/list - list of cameras\n"
                                  "/photo - take photo and send";
-        bot->getApi().sendMessage(id, help);
+        _bot->getApi().sendMessage(id, help);
     } else {
         PLOG_WARNING << "User " << id << " does not have rights.";
     }
 }
 
-void WatcherBot::doMyId(const int64_t id)
+void WatcherBot::doCmdId(const int64_t id)
 {
-    PLOG_INFO << "Command 'myid' from " << id;
+    PLOG_INFO << "Command 'id' from " << id;
     const std::string msg("Your id is: " + std::to_string(id));
-    bot->getApi().sendMessage(id, msg);
+    _bot->getApi().sendMessage(id, msg);
 }
 
-void WatcherBot::doPhoto(const int64_t id)
+void WatcherBot::doCmdPhoto(const int64_t id)
 {
     PLOG_INFO << "Command 'photo' from " << id;
-    const bool found = std::find(chat_list.begin(), chat_list.end(), id) != chat_list.end();
-    if (found) {
-        for (auto camera : cameras) {
+    if (isUserHasRights(id)) {
+        for (auto camera : _cameras) {
             auto [ img, isOk ] = camera.get();
             if (not isOk) {
                 PLOG_INFO << "Camera " << camera.info() << " is not avaliable" ;
-                bot->getApi().sendMessage(id, "Camera " + camera.info() + " is not avaliable");
+                _bot->getApi().sendMessage(id, "Camera " + camera.info() + " is not avaliable");
                 continue;
             }
             const std::string imgPath = "/tmp/fast.img.png";
             cv::imwrite(imgPath, img);
-            bot->getApi().sendPhoto(id, TgBot::InputFile::fromFile(imgPath, "image/png"));
+            _bot->getApi().sendPhoto(id, TgBot::InputFile::fromFile(imgPath, "image/png"));
         }
     } else {
-        bot->getApi().sendMessage(id, "You doesn't have rights");
+        _bot->getApi().sendMessage(id, "You doesn't have rights");
         PLOG_WARNING << "User " << id << " does not have rights.";
     }
 }
 
+bool WatcherBot::isUserHasRights(const int64_t id)
+{
+    return std::find(_chat_list.begin(), _chat_list.end(), id) != _chat_list.end();
+}
+
 WatcherBot::~WatcherBot()
 {
-    for (auto& finder : diff_finders) {
+    for (auto& finder : _diff_finders) {
         delete finder;
     }
 }

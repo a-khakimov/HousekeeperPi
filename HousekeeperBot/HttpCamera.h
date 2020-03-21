@@ -12,11 +12,13 @@
 #include <opencv2/core.hpp>
 #include "httplib.h"
 
-
 class HttpCamera
 {
 public:
-    HttpCamera(const std::string& host, const uint64_t port, const std::string& path);
+    HttpCamera( const std::string& host,
+                const uint64_t port,
+                const std::string& path
+               );
     virtual ~HttpCamera();
 
     std::tuple<cv::Mat, bool> get();
