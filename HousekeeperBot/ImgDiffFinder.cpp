@@ -43,20 +43,12 @@ cv::Mat ImgDiffFinder::makeDiffImg(const cv::Mat& imgA, const cv::Mat& imgB)
     return diff;
 }
 
-cv::Mat ImgDiffFinder::makeConcatImg(cv::Mat A, cv::Mat B, cv::Mat C)
+cv::Mat ImgDiffFinder::makeConcatImg(const cv::Mat& A, const cv::Mat& B, const cv::Mat& C)
 {
     cv::Mat concatAB;
-    try {
-        cv::hconcat(A, B, concatAB);
-    } catch (...) {
-        PLOG_DEBUG << "> Concat A+B";
-    }
+    cv::hconcat(A, B, concatAB);
     cv::Mat concatABC;
-    try {
-        cv::hconcat(concatAB, C, concatABC);
-    } catch (...) {
-        PLOG_DEBUG << "> Concat AB+C";
-    }
+    cv::hconcat(concatAB, C, concatABC);
     return concatABC;
 }
 

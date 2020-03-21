@@ -24,7 +24,7 @@ private:
 
     inline cv::Scalar makeMse       ( const cv::Mat&, const cv::Mat&                 );
     inline cv::Mat makeDiffImg      ( const cv::Mat&, const cv::Mat&                 );
-    cv::Mat makeConcatImg    ( cv::Mat, cv::Mat, cv::Mat );
+    inline cv::Mat makeConcatImg    ( const cv::Mat&, const cv::Mat&, const cv::Mat& );
     inline std::string makeDiffInfo ( const std::string&, const cv::Scalar&          );
     inline bool differenceIsLarge   ( const cv::Scalar&                              );
 
