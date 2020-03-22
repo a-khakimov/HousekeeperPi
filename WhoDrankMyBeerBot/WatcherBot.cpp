@@ -163,6 +163,11 @@ void WatcherBot::doCmdId(const int64_t id)
     _bot->getApi().sendMessage(id, msg);
 }
 
+/**
+ * @brief WatcherBot::doCmdPhoto
+ * @todo Сейчас при наличии двух и более камер, каждое изображение отправляется по отдельности.
+ * По хорошему необходимо склеить изображения в одно.
+ */
 void WatcherBot::doCmdPhoto(const int64_t id)
 {
     PLOG_INFO << "Command 'photo' from " << id;
