@@ -1,6 +1,6 @@
 /** 
  *  @file   ImgDiffFinder.cpp
- *  @brief  Get diff for images 
+ *  @copydoc ImgDiffFinder
  *  @author a-khakimov 
  ***********************************************/
 
@@ -65,10 +65,6 @@ bool ImgDiffFinder::differenceIsLarge(const cv::Scalar& mse)
     return (mse.val[0] >= 50);
 }
 
-/*!
-  \fn void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
-    Blah blah
-*/
 void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handler)
 {
     _timer.setInterval([this, handler]() {
@@ -102,9 +98,4 @@ void ImgDiffFinder::onImgDiffFinded(int ms, ImgDiffFinder::ImgDiffHandler handle
             }
         }
     }, ms);
-}
-
-void ImgDiffFinder::setCamera(HttpCamera& camera)
-{
-    _camera = camera;
 }

@@ -1,22 +1,21 @@
 /** 
  *  @file   main.cpp 
+ *  @brief  Все начинается тут
  *  @author a-khakimov 
  ***********************************************/
 
 #include <list>
-#include <stdio.h>
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
 #include "plog/Log.h"
 #include "plog/Appenders/ColorConsoleAppender.h"
+#include <nlohmann/json.hpp>
 #include "cxxopts.hpp"
 #include "HttpCamera.h"
 #include "WatcherBot.h"
 
-/*!
-  \fn auto options(int argc, char** argv)
-    Blah blah
-*/
+/**
+ * @brief Функция предназначенная для парсинга аргументов коммандной строки
+ * @details Для парсинга используется библиотека cxxopts::Options
+ */
 auto options(int argc, char** argv)
 {
     try {
@@ -26,7 +25,7 @@ auto options(int argc, char** argv)
         options.positional_help("[optional args]").show_positional_help();
         options.add_options()
                 ("h,help", "")
-                ("l,logfile", "", cxxopts::value<std::string>(logFile)->default_value("HousekeeperBot.log"))
+                ("l,logfile", "", cxxopts::value<std::string>(logFile)->default_value("WhoDrankMyBeer.log"))
                 ("c,configurations", "", cxxopts::value<std::string>(confFile));
 
         auto result = options.parse(argc, argv);
@@ -44,10 +43,11 @@ auto options(int argc, char** argv)
     }
 }
 
-/*!
-  \fn auto configurations(const std::string& confFile)
-    Blah blah
-*/
+
+/**
+ * @brief Функция предназначенная для получения конфигураций из json-файла
+ * @details Для парсинга json-файла используется библиотека nlohmann::json
+ */
 auto configurations(const std::string& confFile)
 {
     std::ifstream i(confFile);

@@ -1,6 +1,6 @@
 /** 
  *  @file   ImgDiffFinder.h
- *  @brief  Get diff for images 
+ *  @brief  Класс предназначенный для определения наличия разности изображений
  *  @author a-khakimov 
  ***********************************************/
 
@@ -13,6 +13,11 @@
 #include <queue>
 #include <memory>
 
+/**
+ * @brief Класс предназначенный для определения наличия разности изображений
+ *  @details Класс выполняет постоянный мониторинг, выполняя запрос нового изображения раз в секунду
+ *           сравнивая с предыдущим изображением. При наличии разности производится вызов ImgDiffFinder::onImgDiffFinded.
+ */
 class ImgDiffFinder
 {
 private:
@@ -20,19 +25,56 @@ private:
     HttpCamera          _camera;
     std::queue<cv::Mat> _images_queue;
 
+    /**
+     * @brief ImgDiffHandler
+     */
     typedef std::function <void ( const std::string&, const bool )> ImgDiffHandler;
 
-    inline cv::Scalar makeMse       ( const cv::Mat&, const cv::Mat&                 );
+    /**
+     * @brief Метод возвращает числовое значение разности двух изображений
+     * @param imgA - Первое изображение
+     * @param imgB - Второе изображение
+     * @return Mean Square Error — число характеризующее разность двух изображений
+     */
+    inline cv::Scalar makeMse       ( const cv::Mat&  imgA, const cv::Mat& imgB      );
+    /**
+     * @brief Метод возвращает diff изображение, являющееся разностью двух переданных изображений
+     * @param imgA - Первое изображение
+     * @param imgB - Второе изображение
+     * @return diff изображение, являющееся разностью двух переданных изображений
+     */
     inline cv::Mat makeDiffImg      ( const cv::Mat&, const cv::Mat&                 );
+    /**
+     * @brief Производит горизонтальное соединение трех изображений
+     */
     inline cv::Mat makeConcatImg    ( const cv::Mat&, const cv::Mat&, const cv::Mat& );
-    inline std::string makeDiffInfo ( const std::string&, const cv::Scalar&          );
+    /**
+     * @brief makeDiffInfo
+     */
+    inline std::string makeDiffInfo ( const std::string& camInfo, const cv::Scalar& mse );
+    /**
+     * @brief Возвращает строковое значение, содержащее информацию об источнике изображения (см. HttpCamera::info)
+     *        и MSE
+     */
     inline bool differenceIsLarge   ( const cv::Scalar&                              );
 
 public:
-    explicit ImgDiffFinder ( HttpCamera&            );
-    virtual ~ImgDiffFinder (                        );
-    void onImgDiffFinded   ( int ms, ImgDiffHandler );
-    void setCamera         ( HttpCamera& camera     );
+    /**
+     * @brief Конструктор класса ImgDiffFinder
+     * @param cam - аргументом является объект класса HttpCamera, т.е. источник изображений
+     */
+    explicit ImgDiffFinder ( HttpCamera& cam                );
+    /**
+     * @brief Деструктор
+     */
+    virtual ~ImgDiffFinder (                                );
+    /**
+     * @brief Метод, который запускает процесс мониторинга
+     * @details - При достижении определенного значения разности изображений будет вызван обработчик ImgDiffHandler
+     * @param ms - частота с которой будет производится запрос к серверу изображений
+     * @param handler Обработчик, который будет вызван при достижении определенного значения разности изображений
+     */
+    void onImgDiffFinded   ( int ms, ImgDiffHandler handler );
 };
 
 #endif // IMGDIFF_H

@@ -1,3 +1,9 @@
+/**
+ *  @file   WatcherBot.cpp
+ *  @copydoc WatcherBot
+ *  @author a-khakimov
+ ***********************************************/
+
 #include "WatcherBot.h"
 #include "plog/Log.h"
 #include <opencv2/core.hpp>
