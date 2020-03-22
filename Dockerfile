@@ -1,13 +1,8 @@
 FROM ainr/housekeeperbot
-RUN apt update -y && \
-	apt upgrade -y && \
-	cd /home && \
-	git clone https://github.com/a-khakimov/WhoDrankMyBeer.git && \
-	cd WhoDrankMyBeer/ && \
-	git submodule update --init --recursive && \
-	cd WhoDrankMyBeerBot && \
-	mkdir build && \
-	cd build && \
+RUN cd /home/WhoDrankMyBeer && \
+	git pull origin master && \
+	cd WhoDrankMyBeerBot/build && \
+	rm -rf * && \
 	cmake .. && \
 	make && \
 	./WhoDrankMyBeer
