@@ -72,3 +72,7 @@ make
 ### Запуск бота
 
 Список доступных команд можно получить отправив команду `'/help'`
+
+### Doxygen
+
+[https://a-khakimov.github.io/who-drank-my-beer-doxygen/](https://a-khakimov.github.io/who-drank-my-beer-doxygen/)
