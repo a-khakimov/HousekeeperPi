@@ -1,4 +1,4 @@
-FROM ainr/housekeeperbot
+FROM ainr/who-drank-my-beer
 RUN cd /home/WhoDrankMyBeer && \
 	git pull origin master && \
 	cd WhoDrankMyBeerBot/build && \
