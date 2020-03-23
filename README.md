@@ -8,29 +8,10 @@
 
 ## Описание
 
-_TODO_
-
-### Конфигурирование
-
-Для конфигурирования используется json-файл
-
-```json
-{
-    "token" : "",
-    "proxy_host" : "socks5://localhost:9050",
-    "http_cameras": [
-        { "host" : "192.168.0.2", "port" : 1234, "path" : "/PiCamera.png"     },
-        { "host" : "192.168.0.5", "port" : 8890, "path" : "/path/to/img.png"  },
-    ],
-    "chats" : [
-        123456789
-    ]
-}
-``` 
-* *token* - для авторизации бота в telegram
-* *chats* - id-пользователей (чатов), которых будет уведомлять бот
-* *proxy_host* - адрес прокси
-* *http_cameras* - список 
+Простой чат-бот, выполняющий список следующих функций:
+* мониторинг активности в камерах
+* уведомление пользователя
+* выполнение команд пользователя
 
 ## Зависимости
 
@@ -52,14 +33,7 @@ cd WhoDrankMyBeer
 git submodule update --recursive --init
 ```
 
-#### qbs
-
-```bash
-cd WhoDrankMyBeerBot
-qbs build
-```
-
-#### cmake
+Для сборки используется **cmake**:
 
 ```bash
 cd WhoDrankMyBeerBot
@@ -68,11 +42,53 @@ cd build
 cmake ..
 make
 ```
+### Конфигурирование
+
+Для конфигурирования бота необходимо создать json-файл со следующей структурой:
+
+```json
+{
+    "token" : "",
+    "proxy_host" : "socks5://localhost:9050",
+    "http_cameras": [
+        { "host" : "192.168.0.2", "port" : 1234, "path" : "/PiCamera.png"     },
+        { "host" : "192.168.0.5", "port" : 8890, "path" : "/path/to/img.png"  },
+    ],
+    "chats" : [
+        123456789
+    ]
+}
+``` 
+* *token* - для авторизации бота в telegram
+* *chats* - id-пользователей (чатов), которых будет уведомлять бот
+* *proxy_host* - адрес прокси
+* *http_cameras* - список камер
 
 ### Запуск бота
 
-Список доступных команд можно получить отправив команду `'/help'`
+При запуске бота необходимо задать путь к конфигурационному файлу.
 
-### Doxygen
+```bash
+./WhoDrankMyBeer --configurations ./conf.json
+```
 
-[https://a-khakimov.github.io/who-drank-my-beer-doxygen/](https://a-khakimov.github.io/who-drank-my-beer-doxygen/)
+После запуска бот начнет процесс мониторинга активности в камерах. При возникновении какой либо активности бот уведомит пользователя передав в чат изображение.
+
+Так же бот поддерживает команды с помощью которых возможно управление ботом.
+
+```
+/help - help message
+/start - start monitoring
+/stop - stop monitoring
+/id - send chat id
+/list - list of cameras
+/photo - take photo and send
+```
+
+Со врменем команды могут быть изменены. Поэтому список актуальных команд можно получить отправив команду `'/help'`.
+
+### Документация
+
+Документация формируется с помощью Doxygen. 
+
+Ссылка к документации - [https://a-khakimov.github.io/who-drank-my-beer/doxygen/](https://a-khakimov.github.io/who-drank-my-beer/doxygen/)
