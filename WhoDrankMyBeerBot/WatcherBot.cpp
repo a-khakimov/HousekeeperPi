@@ -9,6 +9,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <unistd.h>
 
 WatcherBot::WatcherBot(
         const std::string& token,
@@ -63,6 +64,30 @@ void WatcherBot::init()
         });
     }
 
+    init_bot_commands();
+
+    TgBot::TgLongPoll longPoll(*_bot);
+    try {
+        PLOG_INFO << "Bot username: " << _bot->getApi().getMe()->username;
+    }
+    catch (const std::runtime_error& e) {
+        PLOG_ERROR << "TgBot runtime error: " << e.what() << ". Network problem?";
+    }
+
+    while (true) {
+        try {
+            PLOG_INFO << "Long poll...";
+            longPoll.start();
+        }
+        catch (const std::runtime_error& e) {
+            PLOG_ERROR << "TgBot runtime error: " << e.what() << ". Network problem?";
+            usleep(1000000);
+        }
+    }
+}
+
+void WatcherBot::init_bot_commands()
+{
     _bot->getEvents().onCommand("help", [this](TgBot::Message::Ptr message) {
         doCmdHelp(message->chat->id);
     });
@@ -86,14 +111,6 @@ void WatcherBot::init()
     _bot->getEvents().onCommand("list", [this](TgBot::Message::Ptr message) {
         doCmdCamList(message->chat->id);
     });
-
-    TgBot::TgLongPoll longPoll(*_bot);
-    PLOG_INFO << "Bot username: " << _bot->getApi().getMe()->username;
-
-    while (true) {
-        PLOG_INFO << "Long poll...";
-        longPoll.start();
-    }
 }
 
 void WatcherBot::sendImageDiffToChat(const std::string& imgDiffPath)
