@@ -19,6 +19,7 @@
 auto options(int argc, char** argv)
 {
     try {
+        int severity;
         std::string logFile;
         std::string confFile;
         cxxopts::Options options(argv[0]);
@@ -26,15 +27,15 @@ auto options(int argc, char** argv)
         options.add_options()
                 ("h,help", "")
                 ("l,logfile", "", cxxopts::value<std::string>(logFile)->default_value("WhoDrankMyBeer.log"))
-                ("c,configurations", "", cxxopts::value<std::string>(confFile));
-
+                ("c,configurations", "", cxxopts::value<std::string>(confFile))
+                ("d,debug", "Debug level", cxxopts::value<int>(severity));
         auto result = options.parse(argc, argv);
         if (result.count("help") or confFile.empty()) {
             std::cout << options.help({"", "Group"}) << std::endl;
             exit(0);
         }
 
-        return std::tuple { logFile, confFile };
+        return std::tuple { severity, logFile, confFile };
     }
     catch (const cxxopts::OptionException& e)
     {
@@ -71,15 +72,19 @@ auto configurations(const std::string& confFile)
     return std::tuple { proxy_host, token, chats, cameras };
 }
 
+void logger_init(const std::string logFile, const int severity)
+{
+    static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
+    plog::Severity s = static_cast<plog::Severity>(severity);
+    plog::init(s, logFile.c_str()).addAppender(&consoleAppender);
+}
 
 int main(int argc, char** argv) {
     try {
-        const auto [logFile, confFile] = options(argc, argv);
+        const auto [severity, logFile, confFile] = options(argc, argv);
         const auto [proxy_host, token, chats_list, cameras] = configurations(confFile);
 
-        static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-        plog::init(plog::verbose, logFile.c_str()).addAppender(&consoleAppender);
-
+        logger_init(logFile, severity);
         WatcherBot bot(token, chats_list, cameras, proxy_host);
     }
     catch (TgBot::TgException& e) {
