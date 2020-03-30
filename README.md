@@ -92,3 +92,13 @@ make
 Документация формируется с помощью Doxygen. 
 
 Ссылка к документации - [https://a-khakimov.github.io/who-drank-my-beer/doxygen/](https://a-khakimov.github.io/who-drank-my-beer/doxygen/)
+
+### Известные проблемы
+
+#### Непойманное исключение приводящее к падению бота
+
+```
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  curl error: Couldn't resolve host name
+Аварийный останов (стек памяти сброшен на диск)
+```
